@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroScribe LSTM | Handwriting Recognition</title>
+  <meta name="description" content="Interactive deep learning web interface for handwriting recognition powered by a Long Short-Term Memory (LSTM) neural network on EMNIST Balanced.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-branding">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">NeuroScribe <span class="gradient-text">LSTM</span></h1>
+          <p class="app-subtitle">Recurrent Sequence Modeling for Optical Handwritten Character Recognition</p>
+        </div>
+      </div>
+      
+      <div class="header-badges">
+        <div class="status-pill status-live">
+          <span class="pulsing-dot"></span>
+          <span>Checkpoint Active</span>
+        </div>
+        <div class="status-pill status-info">
+          <span>EMNIST 47 Classes</span>
+        </div>
+        <div class="status-pill status-accent">
+          <span>86.53% Test Accuracy</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button id="tab-canvas-btn" class="tab-button active" onclick="switchTab('canvas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        <span>Interactive Canvas</span>
+      </button>
+      <button id="tab-explorer-btn" class="tab-button" onclick="switchTab('explorer')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Test Set Explorer (18,800)</span>
+      </button>
+      <button id="tab-analytics-btn" class="tab-button" onclick="switchTab('analytics')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Model Analytics & Figures</span>
+      </button>
+    </nav>
+
+    <!-- MAIN VIEW: TAB 1 - INTERACTIVE DRAWING CANVAS -->
+    <main id="view-canvas" class="tab-view active">
+      <div class="two-column-grid">
+        <!-- Left: Drawing Workspace -->
+        <section class="card glass-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Handwriting Input Canvas</h2>
+              <p class="card-description">Draw any alphanumeric character (0-9, A-Z, a-z) inside the box.</p>
+            </div>
+            <div class="brush-controls">
+              <label for="brush-size-slider" class="control-label">Stroke:</label>
+              <input type="range" id="brush-size-slider" min="12" max="32" value="20" class="slider" title="Stroke Width">
+              <span id="brush-size-label" class="badge">20px</span>
+            </div>
+          </div>
+
+          <div class="canvas-wrapper">
+            <canvas id="drawing-canvas" width="280" height="280"></canvas>
+            <div id="canvas-guide-overlay" class="canvas-guides">
+              <div class="guide-center-x"></div>
+              <div class="guide-center-y"></div>
+              <div class="guide-inner-box"></div>
+            </div>
+          </div>
+
+          <!-- Canvas Action Bar -->
+          <div class="canvas-actions">
+            <button id="btn-clear" class="btn btn-secondary" onclick="clearCanvas()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span>Clear</span>
+            </button>
+            <button id="btn-undo" class="btn btn-secondary" onclick="undoCanvas()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+              <span>Undo</span>
+            </button>
+            <button id="btn-predict" class="btn btn-primary" onclick="predictCanvas()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Classify with LSTM</span>
+            </button>
+          </div>
+
+          <!-- Quick presets for student testing -->
+          <div class="quick-draw-section">
+            <span class="quick-draw-title">Try Quick Presets:</span>
+            <div class="preset-chips">
+              <button class="chip" onclick="drawPresetChar('A')">Letter 'A'</button>
+              <button class="chip" onclick="drawPresetChar('3')">Digit '3'</button>
+              <button class="chip" onclick="drawPresetChar('W')">Letter 'W'</button>
+              <button class="chip" onclick="drawPresetChar('7')">Digit '7'</button>
+              <button class="chip" onclick="drawPresetChar('L')">Ambiguity 'L'</button>
+              <button class="chip" onclick="drawPresetChar('0')">Ambiguity '0'</button>
+              <button class="chip" onclick="drawPresetChar('q')">Letter 'q'</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Prediction Results & Sequence Scanner -->
+        <section class="card glass-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Model Classification & Sequence Dynamics</h2>
+              <p class="card-description">LSTM hidden state activations and output probability distribution.</p>
+            </div>
+            <div id="confidence-badge" class="badge badge-idle">Awaiting Input</div>
+          </div>
+
+          <!-- Main Hero Prediction Box -->
+          <div class="hero-prediction-container">
+            <div class="hero-character-box">
+              <span id="hero-pred-char" class="hero-character">?</span>
+              <span id="hero-pred-label" class="hero-label">Draw & Classify</span>
+            </div>
+            <div class="hero-stats-box">
+              <div class="stat-row">
+                <span class="stat-label">Prediction Confidence</span>
+                <span id="stat-confidence" class="stat-value">-- %</span>
+              </div>
+              <div class="stat-bar-bg">
+                <div id="stat-confidence-bar" class="stat-bar-fill" style="width: 0%;"></div>
+              </div>
+              <div class="stat-row mt-2">
+                <span class="stat-label">Target Class Index</span>
+                <span id="stat-class-idx" class="stat-value font-mono">-- / 46</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Model Architecture</span>
+                <span class="stat-value">LSTM(128) + Dense</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ambiguity Callout (Dynamic Alert) -->
+          <div id="ambiguity-alert" class="alert-box alert-warning hidden">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-text">
+              <strong>Orthographic Ambiguity Alert:</strong>
+              <span id="ambiguity-alert-msg"></span>
+            </div>
+          </div>
+
+          <!-- Top-5 Probability Ranking -->
+          <div class="top5-section">
+            <h3 class="subsection-title">Top 5 Competing Predictions</h3>
+            <div id="top5-container" class="top5-list">
+              <div class="empty-state-text">Draw on the canvas and click "Classify with LSTM" to inspect the top 5 hypotheses.</div>
+            </div>
+          </div>
+
+          <!-- LSTM Row-by-Row Sequence Scanner Animation -->
+          <div class="lstm-sequence-visualizer">
+            <div class="scanner-header">
+              <h3 class="subsection-title">Temporal Sequence Ingestion ($28 \times 28 \rightarrow 28 \text{ Time Steps}$)</h3>
+              <span id="scanner-step-label" class="badge badge-accent">t = 28 / 28</span>
+            </div>
+            <div class="scanner-content">
+              <!-- Processed 28x28 Image with animated scanning bar -->
+              <div class="scanner-image-box">
+                <img id="processed-28x28-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><rect width='140' height='140' fill='%230f172a'/><text x='70' y='75' fill='%2364748b' font-size='12' text-anchor='middle'>28x28 Input</text></svg>" alt="28x28 Model View">
+                <div id="scanline-bar" class="scanline-bar"></div>
+              </div>
+              <!-- Temporal Waveform / Row Intensity Profile -->
+              <div class="scanner-graph-box">
+                <span class="graph-label">Horizontal Row Pixel Energy across 28 Time Steps:</span>
+                <div id="timeline-bars" class="timeline-bars">
+                  <!-- 28 bars generated dynamically -->
+                </div>
+                <div class="timeline-axis">
+                  <span>Row 0 (t=1, Top)</span>
+                  <span>Row 14 (Mid)</span>
+                  <span>Row 27 (t=28, Base)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- VIEW: TAB 2 - TEST SET EXPLORER -->
+    <main id="view-explorer" class="tab-view">
+      <div class="card glass-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Official EMNIST Balanced Test Split Explorer</h2>
+            <p class="card-description">Interactively test the model against the 18,800 unseen test samples (400 per class).</p>
+          </div>
+          <div class="explorer-actions">
+            <button id="btn-random-test" class="btn btn-primary" onclick="loadRandomTestSample()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Random Test Sample</span>
+            </button>
+            <div class="sample-search">
+              <input type="number" id="input-sample-idx" min="0" max="18799" value="13104" class="input-number" placeholder="Sample #">
+              <button class="btn btn-secondary" onclick="loadSpecificTestSample()">Jump to Index</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="test-sample-display-grid">
+          <!-- Sample Card Left -->
+          <div class="sample-image-card">
+            <h3 class="subsection-title">Original Test Image</h3>
+            <div class="test-image-container">
+              <img id="test-sample-img" src="" alt="Test Sample">
+            </div>
+            <div class="sample-meta-row">
+              <span class="badge" id="test-sample-idx-badge">Index: #--</span>
+              <span class="badge badge-accent" id="test-sample-class-badge">Class --</span>
+            </div>
+          </div>
+
+          <!-- Sample Outcome Right -->
+          <div class="sample-results-card">
+            <div class="comparison-header">
+              <div class="comparison-box">
+                <span class="comparison-label">Ground Truth</span>
+                <span id="test-gt-char" class="comparison-char text-success">?</span>
+              </div>
+              <div class="comparison-vs">vs</div>
+              <div class="comparison-box">
+                <span class="comparison-label">LSTM Prediction</span>
+                <span id="test-pred-char" class="comparison-char">?</span>
+              </div>
+              <div id="test-outcome-pill" class="outcome-pill pill-correct">
+                [CORRECT]
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="subsection-title">Confidence & Competing Candidates</h3>
+              <div id="test-top5-container" class="top5-list">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- VIEW: TAB 3 - MODEL ANALYTICS & FIGURES -->
+    <main id="view-analytics" class="tab-view">
+      <!-- KPI Stats Grid -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Test Set Accuracy</span>
+          <span class="kpi-value text-accent">86.53%</span>
+          <span class="kpi-sub">16,268 / 18,800 correct</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Macro F1-Score</span>
+          <span class="kpi-value text-success">86.44%</span>
+          <span class="kpi-sub">Balanced 47 classes</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Total Parameters</span>
+          <span class="kpi-value">91,695</span>
+          <span class="kpi-sub">358 KB CPU footprint</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Best Val Loss</span>
+          <span class="kpi-value text-cyan">0.4359</span>
+          <span class="kpi-sub">Optimal Epoch 12 / 15</span>
+        </div>
+      </div>
+
+      <!-- Research Artifacts Gallery -->
+      <div class="figures-grid mt-4">
+        <!-- Figure 1: Confusion Matrix -->
+        <div class="card glass-card figure-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">47 × 47 Confusion Matrix Heatmap</h3>
+              <p class="card-description">Row-normalized true class percentages across 18,800 test samples.</p>
+            </div>
+            <a href="/figures/confusion_matrix.png" target="_blank" class="btn btn-secondary btn-sm">Full Res ↗</a>
+          </div>
+          <div class="figure-img-wrap">
+            <img src="/figures/confusion_matrix.png" alt="Confusion Matrix Heatmap" loading="lazy">
+          </div>
+        </div>
+
+        <!-- Figure 2: Misclassified Examples -->
+        <div class="card glass-card figure-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Misclassified Error Inspection Gallery</h3>
+              <p class="card-description">16 deterministic failure cases showing top-3 hypotheses.</p>
+            </div>
+            <a href="/figures/misclassified_examples.png" target="_blank" class="btn btn-secondary btn-sm">Full Res ↗</a>
+          </div>
+          <div class="figure-img-wrap">
+            <img src="/figures/misclassified_examples.png" alt="Misclassified Examples" loading="lazy">
+          </div>
+        </div>
+
+        <!-- Figure 3: Training History Curves -->
+        <div class="card glass-card figure-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Training & Validation Convergence Curves</h3>
+              <p class="card-description">Loss decay and accuracy progression over 15 epochs.</p>
+            </div>
+            <a href="/figures/training_history_curves.png" target="_blank" class="btn btn-secondary btn-sm">Full Res ↗</a>
+          </div>
+          <div class="figure-img-wrap">
+            <img src="/figures/training_history_curves.png" alt="Training History Curves" loading="lazy">
+          </div>
+        </div>
+
+        <!-- Figure 4: Prediction Demo Gallery -->
+        <div class="card glass-card figure-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Prediction Demonstration Gallery</h3>
+              <p class="card-description">16 unseen test predictions with 93.8% demonstration accuracy.</p>
+            </div>
+            <a href="/figures/handwriting_prediction_demo.png" target="_blank" class="btn btn-secondary btn-sm">Full Res ↗</a>
+          </div>
+          <div class="figure-img-wrap">
+            <img src="/figures/handwriting_prediction_demo.png" alt="Prediction Demo" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>B.Tech Computer Engineering Practical • Long Short-Term Memory (LSTM) Handwriting Recognition • EMNIST Balanced (47 Classes)</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

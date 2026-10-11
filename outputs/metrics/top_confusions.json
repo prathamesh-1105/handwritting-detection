@@ -1,0 +1,100 @@
+{
+  "metadata": {
+    "total_test_samples": 18800,
+    "samples_per_class": 400,
+    "total_misclassifications": 2532,
+    "top_n_extracted": 10
+  },
+  "top_confusions": [
+    {
+      "true_class_index": 21,
+      "true_character": "L",
+      "predicted_class_index": 1,
+      "predicted_character": "1",
+      "misclassified_count": 184,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 46.0
+    },
+    {
+      "true_class_index": 40,
+      "true_character": "f",
+      "predicted_class_index": 15,
+      "predicted_character": "F",
+      "misclassified_count": 167,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 41.75
+    },
+    {
+      "true_class_index": 18,
+      "true_character": "I",
+      "predicted_class_index": 1,
+      "predicted_character": "1",
+      "misclassified_count": 142,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 35.5
+    },
+    {
+      "true_class_index": 0,
+      "true_character": "0",
+      "predicted_class_index": 24,
+      "predicted_character": "O",
+      "misclassified_count": 114,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 28.5
+    },
+    {
+      "true_class_index": 24,
+      "true_character": "O",
+      "predicted_class_index": 0,
+      "predicted_character": "0",
+      "misclassified_count": 111,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 27.75
+    },
+    {
+      "true_class_index": 15,
+      "true_character": "F",
+      "predicted_class_index": 40,
+      "predicted_character": "f",
+      "misclassified_count": 99,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 24.75
+    },
+    {
+      "true_class_index": 44,
+      "true_character": "q",
+      "predicted_class_index": 9,
+      "predicted_character": "9",
+      "misclassified_count": 88,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 22.0
+    },
+    {
+      "true_class_index": 9,
+      "true_character": "9",
+      "predicted_class_index": 44,
+      "predicted_character": "q",
+      "misclassified_count": 75,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 18.75
+    },
+    {
+      "true_class_index": 41,
+      "true_character": "g",
+      "predicted_class_index": 44,
+      "predicted_character": "q",
+      "misclassified_count": 60,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 15.0
+    },
+    {
+      "true_class_index": 2,
+      "true_character": "2",
+      "predicted_class_index": 35,
+      "predicted_character": "Z",
+      "misclassified_count": 57,
+      "total_true_samples": 400,
+      "percentage_of_true_class": 14.25
+    }
+  ]
+}
