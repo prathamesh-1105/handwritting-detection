@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms and Conditions - LSTM Handwriting Recognition System</title>
+  <meta name="description" content="Terms and conditions for utilizing the LSTM Handwriting Recognition system.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="legal-page">
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-left">
+        <a href="/" class="brand-link">
+          <div class="brand-badge">LSTM-47</div>
+          <span class="brand-name">EMNIST Sequence Classifier</span>
+        </a>
+      </div>
+      <nav class="header-nav">
+        <a href="/" class="nav-link">Main Console</a>
+        <a href="/privacy.html" class="nav-link">Privacy Policy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal-container">
+    <div class="legal-card">
+      <div class="legal-header">
+        <span class="sub-label">Legal Documentation</span>
+        <h1 class="page-title">Terms and Conditions</h1>
+        <p class="meta-text">Effective Date: October 11, 2026 | System Version: 1.0.0 (Localhost Deployment)</p>
+      </div>
+
+      <section class="legal-section">
+        <h2>1. Acceptance of Terms</h2>
+        <p>By initializing, accessing, or utilizing this software console, you agree to comply with and be bound by these Terms and Conditions. This system is developed for academic evaluation, laboratory benchmarking, and research experimentation under B.Tech Computer Engineering curriculum guidelines.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>2. Permitted Use and License</h2>
+        <p>The code, architecture definitions, and evaluation scripts are provided for educational and non-commercial research purposes. You are authorized to:</p>
+        <ul>
+          <li>Execute the inference pipeline and interactive console on local or self-hosted infrastructure.</li>
+          <li>Evaluate model predictions against custom inputs or the 18,800 official test samples.</li>
+          <li>Reproduce training metrics and confusion matrix distributions using the documented procedures.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section">
+        <h2>3. Algorithmic Nature and Accuracy Disclaimer</h2>
+        <p>The underlying model is a sequential recurrent neural network composed of 128 LSTM units, Dropout, and Dense projection layers, evaluated strictly on 47 balanced alphanumeric classes from EMNIST:</p>
+        <ul>
+          <li><strong>Empirical Accuracy:</strong> The measured overall test accuracy is 86.53% with a Macro F1-score of 86.44% across 18,800 held-out test samples.</li>
+          <li><strong>Orthographic Ambiguity:</strong> The system does not guarantee 100% classification accuracy. Certain handwritten characters possess identical visual geometries under 28x28 bounding box normalization (including 'L' vs '1', 'I' vs '1', '0' vs 'O', and 'f' vs 'F'). Classification outputs represent statistical maximum-likelihood estimates, not deterministic certainties.</li>
+          <li><strong>No Critical System Use:</strong> This software is not certified for mission-critical, life-safety, financial, or automated legal document execution without human verification.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section">
+        <h2>4. Dataset Attribution</h2>
+        <p>The benchmark dataset utilized is EMNIST Balanced, developed by the National Institute of Standards and Technology (NIST) and published by Cohen et al. (2017). Users must respect the original data distribution terms established by NIST.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>5. Custom Domain and Hosting Disclaimers</h2>
+        <p>When running this service on a custom domain or intranet hostname, the system operator is solely responsible for network firewall rules, TLS termination, and access authentication. The software is provided as-is without warranties of merchantability or fitness for a particular commercial purpose.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>6. Limitation of Liability</h2>
+        <p>Under no circumstances shall the authors or academic contributors be liable for any direct, indirect, incidental, or consequential damages resulting from the use or inability to use this software or its classification predictions.</p>
+      </section>
+
+      <div class="legal-footer-nav">
+        <a href="/" class="btn btn-secondary">Return to Inference Console</a>
+        <a href="/privacy.html" class="btn btn-primary">Review Privacy Policy</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <span>EMNIST Balanced LSTM Classifier | Localhost Node</span>
+      </div>
+      <div class="footer-links">
+        <a href="/">Console</a>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/terms.html" class="active">Terms and Conditions</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

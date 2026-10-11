@@ -1,9 +1,9 @@
 /* ==========================================================================
-   NEUROSCRIBE LSTM - CLIENT JAVASCRIPT LOGIC
-   Interactive Canvas, Real-time REST API, and Sequence Visualizer
+   NEUROSCRIBE LSTM - CLIENT WORKSTATION LOGIC
+   Deterministic Canvas Input, Inference Client, and Sequence Visualizer
    ========================================================================== */
 
-// State
+// Canvas State
 let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
@@ -11,109 +11,114 @@ let brushSize = 20;
 let undoStack = [];
 const MAX_UNDO = 15;
 
-// DOM Elements
 const canvas = document.getElementById("drawing-canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
-const brushSlider = document.getElementById("brush-size-slider");
-const brushLabel = document.getElementById("brush-size-label");
+const brushSlider = document.getElementById("brush-slider");
+const brushVal = document.getElementById("brush-val");
 
-// Initialize Canvas
 function initCanvas() {
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  saveState();
+  saveCanvasState();
 
   // Mouse Listeners
-  canvas.addEventListener("mousedown", startDrawing);
-  canvas.addEventListener("mousemove", draw);
-  canvas.addEventListener("mouseup", stopDrawing);
-  canvas.addEventListener("mouseleave", stopDrawing);
+  canvas.addEventListener("mousedown", onMouseDown);
+  canvas.addEventListener("mousemove", onMouseMove);
+  canvas.addEventListener("mouseup", onMouseUp);
+  canvas.addEventListener("mouseleave", onMouseUp);
 
-  // Touch Listeners (Mobile & Tablet)
+  // Touch Listeners
   canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
     const touch = e.touches[0];
-    const mouseEvent = new MouseEvent("mousedown", {
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-    });
-    canvas.dispatchEvent(mouseEvent);
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    isDrawing = true;
+    lastX = x;
+    lastY = y;
+    drawPoint(x, y);
   });
 
   canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
+    if (!isDrawing) return;
     const touch = e.touches[0];
-    const mouseEvent = new MouseEvent("mousemove", {
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-    });
-    canvas.dispatchEvent(mouseEvent);
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    drawLine(lastX, lastY, x, y);
+    lastX = x;
+    lastY = y;
   });
 
   canvas.addEventListener("touchend", (e) => {
     e.preventDefault();
-    const mouseEvent = new MouseEvent("mouseup", {});
-    canvas.dispatchEvent(mouseEvent);
+    if (isDrawing) {
+      isDrawing = false;
+      saveCanvasState();
+    }
   });
 
   // Slider
   brushSlider.addEventListener("input", (e) => {
     brushSize = parseInt(e.target.value, 10);
-    brushLabel.textContent = `${brushSize}px`;
+    brushVal.textContent = `${brushSize}px`;
   });
 
-  // Initialize Timeline graph
-  initTimelineGraph();
+  initWaveform();
 }
 
-function getCanvasCoords(e) {
+function getCoords(e) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
   return {
-    x: (e.clientX - rect.x) * scaleX,
-    y: (e.clientY - rect.y) * scaleY,
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height),
   };
 }
 
-function startDrawing(e) {
+function onMouseDown(e) {
   isDrawing = true;
-  const coords = getCanvasCoords(e);
-  lastX = coords.x;
-  lastY = coords.y;
+  const { x, y } = getCoords(e);
+  lastX = x;
+  lastY = y;
+  drawPoint(x, y);
+}
 
-  // Draw initial dot
+function onMouseMove(e) {
+  if (!isDrawing) return;
+  const { x, y } = getCoords(e);
+  drawLine(lastX, lastY, x, y);
+  lastX = x;
+  lastY = y;
+}
+
+function onMouseUp() {
+  if (isDrawing) {
+    isDrawing = false;
+    saveCanvasState();
+  }
+}
+
+function drawPoint(x, y) {
   ctx.beginPath();
-  ctx.arc(lastX, lastY, brushSize / 2, 0, Math.PI * 2);
+  ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
   ctx.fillStyle = "#ffffff";
   ctx.fill();
 }
 
-function draw(e) {
-  if (!isDrawing) return;
-  const coords = getCanvasCoords(e);
-
+function drawLine(x1, y1, x2, y2) {
   ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(coords.x, coords.y);
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = brushSize;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.stroke();
-
-  lastX = coords.x;
-  lastY = coords.y;
 }
 
-function stopDrawing() {
-  if (isDrawing) {
-    isDrawing = false;
-    saveState();
-  }
-}
-
-function saveState() {
+function saveCanvasState() {
   if (undoStack.length >= MAX_UNDO) {
     undoStack.shift();
   }
@@ -123,39 +128,43 @@ function saveState() {
 function clearCanvas() {
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  saveState();
-  resetPredictionDisplay();
+  saveCanvasState();
+  resetOutputs();
 }
 
 function undoCanvas() {
   if (undoStack.length > 1) {
-    undoStack.pop(); // Remove current state
-    const prevState = undoStack[undoStack.length - 1];
-    ctx.putImageData(prevState, 0, 0);
+    undoStack.pop();
+    const prev = undoStack[undoStack.length - 1];
+    ctx.putImageData(prev, 0, 0);
   } else if (undoStack.length === 1) {
     clearCanvas();
   }
 }
 
-function resetPredictionDisplay() {
-  document.getElementById("hero-pred-char").textContent = "?";
-  document.getElementById("hero-pred-label").textContent = "Draw & Classify";
-  document.getElementById("stat-confidence").textContent = "-- %";
-  document.getElementById("stat-confidence-bar").style.width = "0%";
-  document.getElementById("stat-class-idx").textContent = "-- / 46";
+function resetOutputs() {
+  document.getElementById("pred-char-output").textContent = "-";
+  document.getElementById("pred-class-idx").textContent = "-- / 46";
+  document.getElementById("pred-conf-pct").textContent = "-- %";
+  document.getElementById("pred-conf-bar").style.width = "0%";
+  document.getElementById("pred-status-text").textContent = "Idle";
 
-  const badge = document.getElementById("confidence-badge");
-  badge.textContent = "Awaiting Input";
-  badge.className = "badge badge-idle";
+  const ind = document.getElementById("confidence-indicator");
+  ind.textContent = "Awaiting Input";
+  ind.style.borderColor = "var(--border-subtle)";
 
-  document.getElementById("ambiguity-alert").classList.add("hidden");
-  document.getElementById("top5-container").innerHTML = `
-    <div class="empty-state-text">Draw on the canvas and click "Classify with LSTM" to inspect the top 5 hypotheses.</div>
+  document.getElementById("alert-ambiguity").classList.add("hidden");
+  document.getElementById("top5-table-body").innerHTML = `
+    <tr>
+      <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 18px;">
+        Draw a character or select a preset to compute the softmax ranking.
+      </td>
+    </tr>
   `;
 }
 
-// Draw quick presets for fast demonstration
-function drawPresetChar(char) {
+// Preset vectors for fast verification
+function drawPreset(char) {
   clearCanvas();
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 22;
@@ -209,16 +218,16 @@ function drawPresetChar(char) {
     ctx.lineTo(w * 0.72, h * 0.85);
     ctx.stroke();
   }
-  saveState();
+  saveCanvasState();
   predictCanvas();
 }
 
-// Call Classification API
+// POST to /api/predict
 async function predictCanvas() {
   const dataUrl = canvas.toDataURL("image/png");
   const btn = document.getElementById("btn-predict");
   btn.disabled = true;
-  btn.innerHTML = `<span>Classifying...</span>`;
+  btn.textContent = "Computing...";
 
   try {
     const res = await fetch("/api/predict", {
@@ -229,204 +238,197 @@ async function predictCanvas() {
 
     const data = await res.json();
     if (data.is_blank) {
-      alert("Canvas is blank! Please draw a character before classifying.");
+      alert("Canvas frame is empty. Please draw a character stroke.");
       return;
     }
-
     if (data.error) {
-      alert(`Classification error: ${data.error}`);
+      alert(`Inference error: ${data.error}`);
       return;
     }
 
-    renderPredictionResults(data);
+    renderInferenceResult(data);
   } catch (err) {
-    console.error("Prediction request failed:", err);
-    alert("Server error during classification. Check localhost console.");
+    console.error("Inference request failed:", err);
+    alert("Connection error to localhost:8000. Verify the Python backend is running.");
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      <span>Classify with LSTM</span>
-    `;
+    btn.textContent = "Execute Inference";
   }
 }
 
-function renderPredictionResults(data) {
-  // Hero section
-  const heroChar = document.getElementById("hero-pred-char");
-  heroChar.textContent = data.predicted_character;
-  document.getElementById("hero-pred-label").textContent = `Class ${data.class_index}`;
-  document.getElementById("stat-confidence").textContent = `${data.confidence.toFixed(1)}%`;
-  document.getElementById("stat-confidence-bar").style.width = `${Math.min(100, data.confidence)}%`;
-  document.getElementById("stat-class-idx").textContent = `${data.class_index} / 46`;
+function renderInferenceResult(data) {
+  // Main outputs
+  document.getElementById("pred-char-output").textContent = data.predicted_character;
+  document.getElementById("pred-class-idx").textContent = `${data.class_index} / 46`;
+  document.getElementById("pred-conf-pct").textContent = `${data.confidence.toFixed(2)}%`;
+  document.getElementById("pred-conf-bar").style.width = `${Math.min(100, data.confidence)}%`;
 
-  // Badge tier
-  const badge = document.getElementById("confidence-badge");
+  const ind = document.getElementById("confidence-indicator");
+  const statusText = document.getElementById("pred-status-text");
+
   if (data.confidence >= 80) {
-    badge.textContent = "High Confidence";
-    badge.className = "badge badge-high";
+    ind.textContent = "High Certainty";
+    ind.style.borderColor = "var(--accent-green)";
+    statusText.textContent = "High Confidence";
   } else if (data.confidence >= 50) {
-    badge.textContent = "Moderate Confidence";
-    badge.className = "badge badge-medium";
+    ind.textContent = "Moderate Certainty";
+    ind.style.borderColor = "var(--accent-amber)";
+    statusText.textContent = "Moderate Confidence";
   } else {
-    badge.textContent = "Low / Ambiguous";
-    badge.className = "badge badge-low";
+    ind.textContent = "Ambiguous Classification";
+    ind.style.borderColor = "var(--accent-red)";
+    statusText.textContent = "Low / Split Distribution";
   }
 
-  // Ambiguity alert
-  const alertBox = document.getElementById("ambiguity-alert");
+  // Ambiguity notification
+  const alertBox = document.getElementById("alert-ambiguity");
   if (data.ambiguity_note) {
-    document.getElementById("ambiguity-alert-msg").textContent = data.ambiguity_note;
+    document.getElementById("alert-ambiguity-text").textContent = data.ambiguity_note;
     alertBox.classList.remove("hidden");
   } else {
     alertBox.classList.add("hidden");
   }
 
-  // Top-5 list
-  renderTop5List("top5-container", data.top_5);
+  // Render Top 5 table
+  renderTop5Table("top5-table-body", data.top_5);
 
-  // 28x28 Preprocessed Preview
+  // 28x28 normalized image
   if (data.preview_image) {
-    document.getElementById("processed-28x28-img").src = data.preview_image;
+    document.getElementById("matrix-28x28-img").src = data.preview_image;
   }
 
-  // Update 28-step timeline bars
+  // Waveform
   if (data.scanline_intensities) {
-    updateTimelineGraph(data.scanline_intensities);
+    updateWaveform(data.scanline_intensities);
   }
 }
 
-function renderTop5List(containerId, top5) {
-  const container = document.getElementById(containerId);
-  if (!top5 || top5.length === 0) return;
+function renderTop5Table(tbodyId, top5List) {
+  const tbody = document.getElementById(tbodyId);
+  if (!top5List || top5List.length === 0) return;
 
   let html = "";
-  top5.forEach((item, idx) => {
-    const pct = (item.confidence * 100).toFixed(1);
+  top5List.forEach((item, idx) => {
+    const pct = (item.confidence * 100).toFixed(2);
     html += `
-      <div class="top5-row">
-        <span class="top5-rank">#${idx + 1}</span>
-        <span class="top5-char">${item.character}</span>
-        <div class="top5-bar-wrap">
-          <div class="top5-bar-fill" style="width: ${pct}%;"></div>
-        </div>
-        <span class="top5-pct">${pct}%</span>
-      </div>
+      <tr>
+        <td class="rank-idx">${idx + 1}</td>
+        <td class="char-cell">${item.character}</td>
+        <td class="prob-cell">
+          <div class="progress-bar-bg" style="margin: 0;">
+            <div class="progress-bar-fill" style="width: ${pct}%;"></div>
+          </div>
+        </td>
+        <td class="prob-pct">${pct}%</td>
+      </tr>
     `;
   });
-  container.innerHTML = html;
+  tbody.innerHTML = html;
 }
 
-// 28 Time Steps Timeline Visualization
-function initTimelineGraph() {
-  const container = document.getElementById("timeline-bars");
+// 28 Time Steps Waveform
+function initWaveform() {
+  const container = document.getElementById("waveform-display");
   container.innerHTML = "";
   for (let i = 0; i < 28; i++) {
     const bar = document.createElement("div");
-    bar.className = "timeline-bar-col";
-    bar.id = `timeline-col-${i}`;
-    bar.style.height = "4px";
+    bar.className = "waveform-col";
+    bar.id = `wave-bar-${i}`;
+    bar.style.height = "2px";
     bar.title = `Step t=${i + 1} (Row ${i})`;
     container.appendChild(bar);
   }
 }
 
-function updateTimelineGraph(intensities) {
+function updateWaveform(intensities) {
   const maxVal = Math.max(...intensities, 0.01);
   for (let i = 0; i < 28; i++) {
-    const col = document.getElementById(`timeline-col-${i}`);
-    if (col && intensities[i] !== undefined) {
-      const heightPct = Math.max(4, Math.min(100, (intensities[i] / maxVal) * 100));
-      col.style.height = `${heightPct}%`;
+    const bar = document.getElementById(`wave-bar-${i}`);
+    if (bar && intensities[i] !== undefined) {
+      const h = Math.max(2, Math.min(100, (intensities[i] / maxVal) * 100));
+      bar.style.height = `${h}%`;
     }
   }
 }
 
-// Tab Switching
-function switchTab(tabName) {
-  document.querySelectorAll(".tab-button").forEach((btn) => btn.classList.remove("active"));
-  document.querySelectorAll(".tab-view").forEach((view) => view.classList.remove("active"));
+// Section Switching
+function switchSection(name) {
+  document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+  document.querySelectorAll(".tab-section").forEach((sec) => sec.classList.remove("active"));
 
-  if (tabName === "canvas") {
+  if (name === "canvas") {
     document.getElementById("tab-canvas-btn").classList.add("active");
-    document.getElementById("view-canvas").classList.add("active");
-  } else if (tabName === "explorer") {
+    document.getElementById("section-canvas").classList.add("active");
+  } else if (name === "explorer") {
     document.getElementById("tab-explorer-btn").classList.add("active");
-    document.getElementById("view-explorer").classList.add("active");
+    document.getElementById("section-explorer").classList.add("active");
     loadRandomTestSample();
-  } else if (tabName === "analytics") {
+  } else if (name === "analytics") {
     document.getElementById("tab-analytics-btn").classList.add("active");
-    document.getElementById("view-analytics").classList.add("active");
+    document.getElementById("section-analytics").classList.add("active");
   }
 }
 
-// ==========================================================================
-// TAB 2: TEST EXPLORER
-// ==========================================================================
+// Test Explorer Methods
 async function loadRandomTestSample() {
-  const btn = document.getElementById("btn-random-test");
+  const btn = document.getElementById("btn-random-sample");
   btn.disabled = true;
+  btn.textContent = "Fetching Sample...";
 
   try {
     const res = await fetch("/api/random_test_sample");
     const data = await res.json();
-    renderTestSample(data);
+    renderTestExplorerSample(data);
   } catch (err) {
     console.error("Failed to load random test sample:", err);
   } finally {
     btn.disabled = false;
+    btn.textContent = "Load Random Test Sample";
   }
 }
 
 async function loadSpecificTestSample() {
-  const input = document.getElementById("input-sample-idx");
+  const input = document.getElementById("input-test-index");
   const idx = parseInt(input.value, 10);
   if (isNaN(idx) || idx < 0 || idx >= 18800) {
-    alert("Please enter a valid sample index between 0 and 18799.");
+    alert("Please provide an index integer between 0 and 18799.");
     return;
   }
 
   try {
     const res = await fetch(`/api/test_sample?index=${idx}`);
     const data = await res.json();
-    renderTestSample(data);
+    renderTestExplorerSample(data);
   } catch (err) {
-    console.error("Failed to load test sample:", err);
+    console.error("Failed to load sample by index:", err);
   }
 }
 
-function renderTestSample(data) {
-  document.getElementById("test-sample-img").src = data.image_data;
-  document.getElementById("test-sample-idx-badge").textContent = `Index: #${data.sample_index}`;
-  document.getElementById("test-sample-class-badge").textContent = `Class ${data.ground_truth_index}`;
-  document.getElementById("input-sample-idx").value = data.sample_index;
+function renderTestExplorerSample(data) {
+  document.getElementById("test-view-img").src = data.image_data;
+  document.getElementById("test-idx-tag").textContent = `Index: #${data.sample_index}`;
+  document.getElementById("test-cls-tag").textContent = `Class: ${data.ground_truth_index}`;
+  document.getElementById("input-test-index").value = data.sample_index;
 
   document.getElementById("test-gt-char").textContent = data.ground_truth_character;
   const predElem = document.getElementById("test-pred-char");
   predElem.textContent = data.predicted_character;
 
-  const pill = document.getElementById("test-outcome-pill");
+  const pill = document.getElementById("test-status-pill");
   if (data.is_correct) {
-    pill.textContent = "[CORRECT MATCH]";
-    pill.className = "outcome-pill pill-correct";
-    predElem.className = "comparison-char text-success";
+    pill.textContent = "CORRECT MATCH";
+    pill.className = "comp-status-badge badge-match";
+    predElem.style.color = "var(--accent-green)";
   } else {
-    pill.textContent = "[MISCLASSIFICATION]";
-    pill.className = "outcome-pill pill-mismatch";
-    predElem.className = "comparison-char text-accent";
+    pill.textContent = "MISCLASSIFICATION";
+    pill.className = "comp-status-badge badge-diff";
+    predElem.style.color = "var(--accent-red)";
   }
 
-  renderTop5List("test-top5-container", data.top_5);
+  renderTop5Table("test-top5-body", data.top_5);
 }
 
-// On Page Load
+// Lifecycle Init
 window.addEventListener("DOMContentLoaded", () => {
   initCanvas();
-  // Fetch metrics to verify server
-  fetch("/api/metrics")
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Connected to NeuroScribe LSTM Backend:", data);
-    })
-    .catch((err) => console.warn("Backend not yet responsive:", err));
 });

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - LSTM Handwriting Recognition System</title>
+  <meta name="description" content="Privacy Policy for the offline LSTM Handwriting Recognition evaluation system.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="legal-page">
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-left">
+        <a href="/" class="brand-link">
+          <div class="brand-badge">LSTM-47</div>
+          <span class="brand-name">EMNIST Sequence Classifier</span>
+        </a>
+      </div>
+      <nav class="header-nav">
+        <a href="/" class="nav-link">Main Console</a>
+        <a href="/terms.html" class="nav-link">Terms and Conditions</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal-container">
+    <div class="legal-card">
+      <div class="legal-header">
+        <span class="sub-label">Legal Documentation</span>
+        <h1 class="page-title">Privacy Policy</h1>
+        <p class="meta-text">Effective Date: October 11, 2026 | System Version: 1.0.0 (Localhost Deployment)</p>
+      </div>
+
+      <section class="legal-section">
+        <h2>1. Overview and Scope</h2>
+        <p>This Privacy Policy governs the processing of data within the LSTM Handwriting Recognition system running locally on your workstation. This software operates as an offline optical character recognition tool designed for research, benchmarking, and educational evaluation of recurrent neural architectures on the EMNIST Balanced dataset.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>2. Data Collection and Local Processing</h2>
+        <p>The system does not collect, transmit, or synchronize any personal data to external third-party servers. All operations occur exclusively on your local host environment (127.0.0.1):</p>
+        <ul>
+          <li><strong>Input Strokes and Canvas Data:</strong> Graphical character data drawn on the input canvas is transmitted strictly via internal HTTP requests to the local Python inference engine (localhost:8000/api/predict) for matrix transformation. No canvas data is permanently stored or broadcast over the public Internet.</li>
+          <li><strong>Test Samples:</strong> Test evaluations utilize pre-cached local binary files from the National Institute of Standards and Technology (NIST) EMNIST archive stored in the local data directory.</li>
+          <li><strong>Log Files and Metrics:</strong> Operational logs and evaluation matrices remain stored solely within your local file system under the project directory.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section">
+        <h2>3. Cookies and Analytics</h2>
+        <p>This application does not employ tracking cookies, persistent identifiers, advertising pixels, or third-party web analytics tools (such as Google Analytics or Segment). Web sessions run entirely in transient client-side memory.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>4. Data Retention</h2>
+        <p>Canvas drawings are processed in-memory and discarded upon execution or canvas reset. Stored artifacts consist exclusively of static model weights (lstm_handwriting_model.keras) and pre-computed evaluation reports generated during supervised evaluation.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>5. Custom Domain and Network Configuration</h2>
+        <p>When running this system behind a reverse proxy or mapped custom domain (e.g., ocr.internal or local DNS bindings), the network boundary is determined entirely by the host administrator. The software includes no external dependencies or external beacon telemetry.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>6. Security</h2>
+        <p>Because the service binds to the local loopback interface by default (127.0.0.1), network exposure is contained within the local machine unless the user explicitly configures binding to external network interfaces.</p>
+      </section>
+
+      <section class="legal-section">
+        <h2>7. Contact and Administrative Information</h2>
+        <p>For questions regarding this technical implementation or academic reproduction, please refer to the project repository documentation at PROJECT_REPORT.md and README.md.</p>
+      </section>
+
+      <div class="legal-footer-nav">
+        <a href="/" class="btn btn-secondary">Return to Inference Console</a>
+        <a href="/terms.html" class="btn btn-primary">Review Terms and Conditions</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <span>EMNIST Balanced LSTM Classifier | Localhost Node</span>
+      </div>
+      <div class="footer-links">
+        <a href="/">Console</a>
+        <a href="/privacy.html" class="active">Privacy Policy</a>
+        <a href="/terms.html">Terms and Conditions</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
